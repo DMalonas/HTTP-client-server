@@ -1,0 +1,5 @@
+Time: Wed Dec 18 12:06:32 GMT 2019. Client request: GET localhost:8002/index.html HTTP/1.1. Response to client: HTTP/1.1 404 Not Found
+Time: Wed Dec 18 12:07:07 GMT 2019. Client request: GET /index.html HTTP/1.1. Response to client: HTTP/1.1 200 OK
+Time: Wed Dec 18 12:07:10 GMT 2019. Client request: GET /page2.html HTTP/1.1. Response to client: HTTP/1.1 200 OK
+Time: Wed Dec 18 12:07:10 GMT 2019. Client request: GET /tp_it.jpg HTTP/1.1Time: Wed Dec 18 12:07:10 GMT 2019. Client request: GET /beer.jpg HTTP/1.1. Response to client: HTTP/1.1 200 OK
+. Response to client: HTTP/1.1 200 OK

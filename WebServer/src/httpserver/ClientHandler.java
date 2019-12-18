@@ -1,5 +1,6 @@
 package httpserver;
 
+
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
@@ -15,19 +16,24 @@ import java.util.Date;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-public class ClientHandler implements Runnable{
-
-	private Socket s;
-	private PrintWriter out;
-	private String workingDirectory;
-	private InputStream is;
-	private OutputStream os;
-	private BufferedOutputStream outputBody;
-	private PrintWriter pw;
-	private BufferedReader br;
-
-	
+/**
+ * Handle a client Session.
+ * @author 170011408
+ */
+public class ClientHandler implements Runnable {
+    private String workingDirectory;
+    private Socket s = null;
+    private InputStream is = null;
+    private OutputStream os = null;
+    private OutputStream outputBody = null;
+    // For logging
+    private PrintWriter out = null;
+    private PrintWriter pw = null;
+    private BufferedReader br = null;
+    /**
+     * Header part of the server's reply.
+     *@param NOTIMPLEMENTED
+     */
     public static final int NOT_IMPLEMENTED = 0;
     /**
      * Header part of the server's reply.
@@ -44,54 +50,83 @@ public class ClientHandler implements Runnable{
      * @param TOKENS
      */
     public static final int TOKENS = 3;
-    
-    
-	public ClientHandler(Socket s, PrintWriter out, String workingDirectory) {
-		// TODO Auto-generated constructor stub
+    /**
+     * Constructor ClientHandler with three arguments,
+     * of type Socket, PrintWriter and String.
+     * @param s type: Socket, a Socket
+     * @param out type: PrintWriter, for streaming data from the server
+     * @param workingDirectory type: String, the resources directory (www/)
+     */
+    public ClientHandler(Socket s, PrintWriter out, String workingDirectory) {
+	    /**
+             * assign to Socket
+             */
 	    this.s = s;
-
+        /**
+         * assigning out to class PrintWriter object
+         */
         this.out = out;
-
+        /**
+         * assign working directory argument to the workingDirectory variable
+         */
         this.workingDirectory = workingDirectory;
-	}
-
-	@Override
-	public void run() {
-		try {
-			is = s.getInputStream();
-	        os = s.getOutputStream();
-	        outputBody = new BufferedOutputStream(os);
-	        /**
-	         * PrintWriter (for logging) on the Server Socket's OutputStream os
-	         */
-	        pw = new PrintWriter(os, true);
-	        br = new BufferedReader(new InputStreamReader(is));
-	        /**
-	         * Create an empty String for storing the html pages data
-	         */
-	        String line = "";
-	        /**
-	         * Browser reads from Server
-	         */
-	        while (true) {
-	            int d = 0;
-				d = br.read();
-				 
-	            System.out.print((char)d);
-	            /**
-	             * Break when find \n or \n modifiers
-	             */
-	            if (d == '\r' || d == '\n') {
-	                break;
-	            }
-	            line += (char) d;
-	        }
-	        
-	        String date = new Date().toString();
-	        out.print("Time: " + date + ". Client request: " + line);
-	        out.flush();
-
-	        StringTokenizer st = new StringTokenizer(line);
+    }
+    @Override
+    public void run() {
+	try {
+            /**
+             * @getInputStream Returns an InputStream for this socket.
+             */
+	    is = s.getInputStream();
+            /**
+             * @getOutputStream Returns an OutputStream for this socket.
+             */
+            os = s.getOutputStream();
+            /**
+             * BufferedReader on the OutputStream os so we can buffer characters
+             */
+            outputBody = new BufferedOutputStream(os);
+            /**
+             * PrintWriter (for logging) on the Server Socket's OutputStream os
+             */
+            pw = new PrintWriter(os, true);
+            /**
+             * BufferedReader on the InputStream is
+             */
+            br = new BufferedReader(new InputStreamReader(is));
+            /**
+             * Create an empty String for storing the html pages data
+             */
+            String line = "";
+            /**
+             * Browser reads from Server
+             */
+            while (true) {
+                int d = br.read();
+                System.out.print((char)d);
+                /**
+                 * Break when find \n or \n modifiers
+                 */
+                if (d == '\r' || d == '\n') {
+                    break;
+                }
+                line += (char) d;
+            }
+            /**
+             * @see <a href="https://docs.oracle.com/javase/8/docs/api/java/util
+             * /Date.html">https://docs.oracle.com/javase/8/docs/api/java/util/
+             * Date.html</a>
+             */
+            String date = new Date().toString();
+            out.print("Time: " + date + ". Client request: " + line);
+            out.flush();
+            /**
+             * Make use of the StringTokenizer class.
+             * @see <a href="https://docs.oracle.com/javase/7/docs/api/java/util
+             * /StringTokenizer.html">https://docs.oracle.com/javase/7/docs/api/
+             * java/util/StringTokenizer.html</a>
+             */
+            StringTokenizer st = new StringTokenizer(line);
             if (st.countTokens() < TOKENS) {
                 replyToClientHeader(NOT_IMPLEMENTED, new File(workingDirectory
                         + "/errorNI.html"));
@@ -104,9 +139,23 @@ public class ClientHandler implements Runnable{
                 if (fileName.equals("/")) {
                     fileName += "index.html";
                 }
-   
+                /**
+                 * Prepare file name
+                 */
                 fileName = this.workingDirectory + fileName;
+                /**
+                 * Create new file
+                 */
                 file = new File(fileName);
+                /**
+                 * If the file object exists on the server's resources
+                 * and it is not a directory
+                 * then send the file to the client
+                 * otherwise assign another File object to file
+                 * with path leading to errorNF.html file and
+                 * return that.
+                 */
+                
                 if (file.exists() && !file.isDirectory()) {
                     replyToClientHeader(OK, file);
                     if (methodType.equals("GET")) {
@@ -126,50 +175,53 @@ public class ClientHandler implements Runnable{
                 replyToClientHeader(NOT_IMPLEMENTED, file); // 0: 501 Not implemented
                 replyToClientBody(file);
             }
-            br.close();
-            is.close();
-            os.close();
-            s.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}  finally {
-			if (br != null) {
-                try {
-                    br.close();
-                } catch (IOException ex) {
-                    Logger.getLogger(ClientHandler.class.getName()).
-                            log(Level.SEVERE, null, ex);
-                }
-			}
-			if (is != null) {
-                try {
-                    is.close();
-                } catch (IOException ex) {
-                    Logger.getLogger(ClientHandler.class.getName()).
-                            log(Level.SEVERE, null, ex);
-                }
-			}
-			if (os != null) {
-                try {
-                    os.close();
-                } catch (IOException ex) {
-                    Logger.getLogger(ClientHandler.class.getName()).
-                            log(Level.SEVERE, null, ex);
-                }
-			}
-			if (s != null) {
-                try {
-                    s.close();
-                } catch (IOException ex) {
-                    Logger.getLogger(ClientHandler.class.getName()).
-                            log(Level.SEVERE, null, ex);
-                }
-			}
+            //System.out.println(methodType + "\n" + fileName + "\n" + version);
+            /**
+             * Close Reader, Write, InputStream, OutputStream, and Socket objects.
+             */
+             br.close();
+             is.close();
+             os.close();
+            //System.out.println("Closed down");
+             s.close();
+        } catch (IOException ex) {
+            Logger.getLogger(ClientHandler.class.getName()).
+                    log(Level.SEVERE, null, ex);
+        } finally {
+		if (br != null) {
+                    try {
+                        br.close();
+                    } catch (IOException ex) {
+                        Logger.getLogger(ClientHandler.class.getName()).
+                                log(Level.SEVERE, null, ex);
+                    }
+		}
+		if (is != null) {
+                    try {
+                        is.close();
+                    } catch (IOException ex) {
+                        Logger.getLogger(ClientHandler.class.getName()).
+                                log(Level.SEVERE, null, ex);
+                    }
+		}
+		if (os != null) {
+                    try {
+                        os.close();
+                    } catch (IOException ex) {
+                        Logger.getLogger(ClientHandler.class.getName()).
+                                log(Level.SEVERE, null, ex);
+                    }
+		}
+		if (s != null) {
+                    try {
+                        s.close();
+                    } catch (IOException ex) {
+                        Logger.getLogger(ClientHandler.class.getName()).
+                                log(Level.SEVERE, null, ex);
+                    }
 		}
 	}
-	
-	
+    }
     /**
      * This method sends the header part of the server's reply.
      * according to the http protocol's requirements.0: Not Implemented,
@@ -196,6 +248,12 @@ public class ClientHandler implements Runnable{
         }
         pw.print("Server: Simple Java Http Server\r\n");
         try {
+            /**
+             * @see <a href="https://docs.oracle.com/javase/7/docs/api/java/nio/
+             * file/Files.html#probeContentType%28java.nio.file.Path%29">https:/
+             * /docs.oracle.com/javase/7/docs/api/java/nio/file/Files.html#probe
+             * ContentType%28java.nio.file.Path%29</a>
+             */
             pw.print("Content-Type: " + Files.probeContentType(file.toPath()) + "\r\n");
         } catch (IOException ex) {
             Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
@@ -203,8 +261,6 @@ public class ClientHandler implements Runnable{
         pw.print("Content-Length: " + countChars(file) + "\r\n\r\n");
         pw.flush();
     }
-    
-    
     /**
      * This method sends the content of the requested entity,
      * including html pages and binary files.The header
@@ -230,8 +286,6 @@ public class ClientHandler implements Runnable{
             Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
-    
     /**
      * This method returns the file length.
      * @param file resource file
@@ -245,7 +299,4 @@ public class ClientHandler implements Runnable{
          */
         return file.length();
     }
-    
-    
-    
 }
